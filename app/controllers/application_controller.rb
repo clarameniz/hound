@@ -40,17 +40,11 @@ class ApplicationController < ActionController::Base
   end
 
   def current_user
-    @current_user ||= begin
-      if masquerading?
-        User.find_by(id: session[:masqueraded_user_id])
-      else
-        User.find_by(remember_token: session[:remember_token])
-      end
-    end
+    @_current_user ||= find_user_or_masqerade
   end
 
   def analytics
-    @analytics ||= Analytics.new(current_user, session[:campaign_params])
+    @_analytics ||= Analytics.new(current_user, session[:campaign_params])
   end
 
   def masquerading?
@@ -61,5 +55,13 @@ class ApplicationController < ActionController::Base
 
   def verified_request?
     super || valid_authenticity_token?(session, request.headers["X-XSRF-TOKEN"])
+  end
+
+  def find_user_or_masqerade
+    if masquerading?
+      User.find_by(id: session[:masqueraded_user_id])
+    else
+      User.find_by(remember_token: session[:remember_token])
+    end
   end
 end
